@@ -1,67 +1,131 @@
 let step = 0;
-const messages = document.getElementById('chatbot-messages');
+let formData = {
+    civilite: '',
+    nom: '',
+    prenom: '',
+    telephone: '',
+    mail: '',
+    societe: '',
+    date_jour: new Date().toLocaleDateString('fr-FR'),
+    nb_passagers: '',
+    date_depart_aller: '',
+    heure_depart_aller: '',
+    adresse_depart_aller: '',
+    date_arrivee_aller: '',
+    heure_arrivee_aller: '',
+    adresse_arrivee_aller: '',
+    date_depart_retour: '',
+    heure_depart_retour: '',
+    adresse_depart_retour: '',
+    date_arrivee_retour: '',
+    heure_arrivee_retour: '',
+    adresse_arrivee_retour: ''
+};
 
-const steps = [
-    { message: "Bienvenue! Quel est votre nom?", type: "input" },
-    { message: "Quel est votre adresse email?", type: "input" },
-    { message: "Quel est votre numéro de téléphone?", type: "input" },
-    { message: "Merci! Cliquez sur le bouton ci-dessous pour générer le PDF.", type: "final" }
+const questions = [
+    "Quelle est votre civilité ? (M./Mme/Mlle)",
+    "Quel est votre nom ?",
+    "Quel est votre prénom ?",
+    "Quel est votre numéro de téléphone ?",
+    "Quel est votre adresse e-mail ?",
+    "Quelle est votre société ?",
+    "Combien de passagers sont prévus pour ce voyage ?",
+    "Pour le départ aller, à quelle date et à quelle heure est prévu le départ ? (format: JJ/MM/AAAA HH:MM)",
+    "À quelle date et à quelle heure est prévue l'arrivée pour le trajet aller ? (format: JJ/MM/AAAA HH:MM)",
+    "Pour le départ retour, à quelle date et à quelle heure est prévu le départ ? (format: JJ/MM/AAAA HH:MM)",
+    "À quelle date et à quelle heure est prévue l'arrivée pour le trajet retour ? (format: JJ/MM/AAAA HH:MM)"
 ];
 
-function displayMessage(message, from = 'bot') {
+function displayMessage(message, sender = 'bot') {
+    const messagesContainer = document.getElementById('chatbot-messages');
     const messageElement = document.createElement('div');
-    messageElement.classList.add(from === 'bot' ? 'bot-message' : 'user-message');
+    messageElement.className = sender === 'bot' ? 'bot-message' : 'user-message';
     messageElement.textContent = message;
-    messages.appendChild(messageElement);
-    messages.scrollTop = messages.scrollHeight;
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function nextStep(userResponse = '') {
-    if (step > 0 && userResponse) {
+function nextStep(userResponse) {
+    if (userResponse !== undefined) {
         displayMessage(userResponse, 'user');
+        switch (step) {
+            case 0:
+                formData.civilite = userResponse;
+                break;
+            case 1:
+                formData.nom = userResponse;
+                break;
+            case 2:
+                formData.prenom = userResponse;
+                break;
+            case 3:
+                formData.telephone = userResponse;
+                break;
+            case 4:
+                formData.mail = userResponse;
+                break;
+            case 5:
+                formData.societe = userResponse;
+                break;
+            case 6:
+                formData.nb_passagers = userResponse;
+                break;
+            case 7:
+                formData.date_depart_aller = userResponse.split(' ')[0];
+                formData.heure_depart_aller = userResponse.split(' ')[1];
+                formData.adresse_depart_aller = "Adresse à définir";
+                break;
+            case 8:
+                formData.date_arrivee_aller = userResponse.split(' ')[0];
+                formData.heure_arrivee_aller = userResponse.split(' ')[1];
+                formData.adresse_arrivee_aller = "Adresse à définir";
+                break;
+            case 9:
+                formData.date_depart_retour = userResponse.split(' ')[0];
+                formData.heure_depart_retour = userResponse.split(' ')[1];
+                formData.adresse_depart_retour = "Adresse à définir";
+                break;
+            case 10:
+                formData.date_arrivee_retour = userResponse.split(' ')[0];
+                formData.heure_arrivee_retour = userResponse.split(' ')[1];
+                formData.adresse_arrivee_retour = "Adresse à définir";
+                break;
+        }
     }
 
-    if (step < steps.length) {
-        displayMessage(steps[step].message);
-
-        if (steps[step].type === 'final') {
-            const buttonElement = document.createElement('button');
-            buttonElement.textContent = 'Générer le PDF';
-            buttonElement.onclick = sendFormData;
-            messages.appendChild(buttonElement);
-        }
-
+    if (step < questions.length) {
+        displayMessage(questions[step]);
         step++;
+    } else {
+        displayMessage('Merci pour vos réponses. Vous pouvez maintenant télécharger votre PDF.');
+        document.getElementById('download-pdf').style.display = 'inline-block';
     }
 }
 
-function sendFormData() {
-    const data = {
-        name: steps[0].response,
-        email: steps[1].response,
-        phone: steps[2].response
-    };
+function sendMessage() {
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value;
+    userInput.value = '';
+    nextStep(message);
+}
 
-    console.log('Données envoyées:', data);
+// Initialisation du chatbot
+window.onload = function() {
+    displayMessage('Bonjour !');
+    setTimeout(() => displayMessage('Nous avons besoin de quelques réponses pour établir votre devis.'), 1000);
+    setTimeout(nextStep, 2000);
+};
 
-    fetch('/submit-form', {
+function downloadPDF() {
+    fetch('/generate-pdf', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(formData)
     })
-    .then(response => {
-        if (response.ok) {
-            console.log('Réponse du serveur OK');
-            return response.blob();
-        } else {
-            console.error('Erreur de réponse du serveur');
-            throw new Error('Erreur lors de l\'envoi des données.');
-        }
-    })
+    .then(response => response.blob())
     .then(blob => {
-        console.log('Blob reçu:', blob);
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
@@ -70,24 +134,6 @@ function sendFormData() {
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
-        displayMessage('Le PDF a été généré et téléchargé.');
     })
-    .catch(error => {
-        console.error('Erreur:', error);
-        displayMessage('Une erreur s\'est produite.');
-    });
+    .catch(error => console.error('Erreur lors de la génération du PDF:', error));
 }
-
-function sendMessage() {
-    const userInput = document.getElementById('user-input');
-    const userResponse = userInput.value.trim();
-    if (userResponse !== '') {
-        steps[step - 1].response = userResponse;
-        userInput.value = '';
-        nextStep(userResponse);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    nextStep();
-});

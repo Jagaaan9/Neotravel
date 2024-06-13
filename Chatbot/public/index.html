@@ -1,19 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        #chatbot-messages { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; }
-        .bot-message { color: blue; margin: 10px 0; }
-        .user-message { color: green; margin: 10px 0; }
-    </style>
+    <title>Chatbot Devis</title>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <div id="chatbot-messages"></div>
-    <input type="text" id="user-input" onkeydown="if (event.key === 'Enter') sendMessage()" placeholder="Entrez votre message ici...">
-    <script src="script.js"></script>
+    <div id="chatbot-container">
+        <div id="chatbot-messages"></div>
+        <input type="text" id="user-input" placeholder="Tapez votre réponse ici...">
+        <button onclick="sendMessage()">Envoyer</button>
+        <button id="download-pdf" onclick="downloadPDF()" style="display: none;">Télécharger le PDF</button>
+    </div>
+    <script src="/script.js"></script>
 </body>
 </html>
